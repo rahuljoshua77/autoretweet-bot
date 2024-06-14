@@ -50,6 +50,8 @@ def xpath_long(el):
     #browser.execute_script("arguments[0].scrollIntoView();", element_all)
     return browser.execute_script("arguments[0].click();", element_all)
 
+
+
 def auto(username,password):
 
     xpath_long('//button[contains(@data-testid,"follow")]')
@@ -62,13 +64,45 @@ def auto(username,password):
         pass
     xpath_long('(//button[@data-testid="like"])[1]')
     print(f"[*] [{username}] Like Done!")
-
+    
+    
     xpath_ex("(//button[@aria-haspopup='menu' and contains(@aria-label,'Posting ulang') or contains(@aria-label,'Repost') or contains(@aria-label,'Retweet')])[1]")
     
-    xpath_ex('(//div[@data-testid="retweetConfirm"])[1]')
+    choice = open(f"{cwd}\\choice.txt","r")
+    choice = choice.read()
     
-    print(f"[*] [{username}] Retweet Done!")
-    sleep(10000)
+    if "y" in choice.lower() or "Y" in choice:
+        xpath_ex('//div[@data-testid="Dropdown"]/a[@href="/compose/post"]')
+        sleep(1)
+
+        myfile = open(f"{cwd}\\quotes.txt","r")
+        get_quotes = myfile.read()
+        get_quotes = get_quotes.split("\n")
+        quotes = random.choice(get_quotes)
+        myfile = open(f"{cwd}\\friend.txt","r")
+        get_friend = myfile.read()
+        get_friend = get_friend.split("\n")
+        s = random.sample(get_friend, 3)
+        friends = ', '.join([str(elem) for elem in s])
+        input_quotes = wait(browser,30).until(EC.presence_of_element_located((By.XPATH, '(//*[@autocapitalize="sentences"])[1]')))
+        input_quotes.send_keys(f"{quotes} {friends}")
+        xpath_ex('(//button[@data-testid="tweetButton"])[1]')
+        browser.get(f'https://twitter.com/{username}')
+        try:
+            get_url = wait(browser,40).until(EC.presence_of_element_located((By.XPATH, f'(//a[contains(@href,"/{username}/status/")])[1]'))).get_attribute('href')
+            print(f"[*] [{username}] Link Quoted: {get_url}")
+            with open('results.txt','a') as f:
+                f.write(f"{username}|{get_url}")
+        except:
+            pass
+        print(f"[*] [{username}] Retweet Done!")
+        
+    else:
+        xpath_ex('(//div[@data-testid="retweetConfirm"])[1]')
+        
+        print(f"[*] [{username}] Retweet Done!")
+    
+    
 def login(acc):
     acc = acc.split("|")
     
@@ -103,20 +137,24 @@ def login(acc):
     pw_input = wait(browser,30).until(EC.presence_of_element_located((By.XPATH, '//input[@autocomplete="current-password"]')))
     pw_input.send_keys(password)
     pw_input.send_keys(Keys.ENTER)
-
+    sleep(10)
     browser.get(url)
     try:
         auto(username,password)
         browser.quit()
     except Exception as e:
         print(f"[*] [{username}] Error: {e}")
- 
         browser.quit()
+
+
 if __name__ == '__main__':
     print("[*] Auto Twitter")
     voucher = input('[+] Input URL: ')
     with open('url.txt','w') as f: f.write(f'{voucher}\n')
 
+    choice = input('[+] Input choice retweet with quote (y/n): ')
+    with open('choice.txt','w') as f:
+            f.write(f'{choice}')
     myfile = open(f"{cwd}\\list.txt","r")
     list_account = myfile.read()
     list_accountsplit = list_account.split("\n")
